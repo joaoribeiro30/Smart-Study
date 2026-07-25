@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Study</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <div class="pill" aria-hidden="true"></div>
+        <div class="brand-text">
+          <span class="welcome-typing" id="welcome-typing"></span>
+          <span class="brand-title">Smart Study</span>
+          <span class="brand-subtitle">Avaliação diagnóstica por disciplina</span>
+        </div>
+      </div>
+      <div class="header-status">
+        <div class="status-strip">
+          <span class="status-dot"></span>
+          Avaliação ativa
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Tela 0: Login -->
+      <section id="login-screen" class="screen active" aria-label="Identificação do aluno">
+        <div class="ls-root">
+          <div class="ls-left">
+            <div class="ls-top">
+              <div class="ls-logo-mark" aria-hidden="true">
+                <svg viewBox="0 0 20 20">
+                  <path d="M3 3v10c3.5 0 6 1 7 3V6c-1-2-3.5-3-7-3Z"></path>
+                  <path d="M17 3v10c-3.5 0-6 1-7 3V6c1-2 3.5-3 7-3Z"></path>
+                </svg>
+              </div>
+              <span class="ls-logo-name">Smart Study</span>
+            </div>
+
+            <div class="ls-form-area">
+              <div class="ls-eyebrow">Diagnóstico adaptativo</div>
+              <h1 class="ls-heading">Entrar<br>e <span>evoluir.</span></h1>
+              <p class="ls-sub">Identifique seu nível e receba sua trilha de estudo personalizada.</p>
+
+              <div class="student-login-form ls-form">
+                <label class="ls-field" for="student-name">
+                  <span class="ls-label">Nome do aluno</span>
+                  <input id="student-name" class="ls-input login-input" type="text" placeholder="Ex.: Ana Lima" autocomplete="name">
+                </label>
+
+                <label class="ls-field">
+                  <span class="ls-label">Turma</span>
+                  <span class="ls-turma-row">
+                    <input id="student-class-year" class="ls-input login-input ls-turma-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" placeholder="3" autocomplete="off" aria-label="Ano da turma">
+                    <span class="ls-turma-sep">ano · turma</span>
+                    <input id="student-class-group" class="ls-input login-input ls-turma-number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" placeholder="5" autocomplete="off" aria-label="Número da turma">
+                    <input id="student-classroom" type="hidden" value="">
+                  </span>
+                </label>
+              </div>
+
+              <p class="login-helper" id="login-hint" aria-live="polite">
+                Preencha nome e turma para continuar.
+              </p>
+
+              <div class="student-login-actions ls-actions">
+                <button id="continue-login" class="ls-btn-primary primary-button" disabled>
+                  Começar diagnóstico
+                </button>
+                <button id="open-student-area" class="ls-btn-secondary secondary-button" type="button">
+                  Minhas trilhas
+                </button>
+                <button id="open-teacher-access" class="ls-btn-secondary secondary-button" type="button">
+                  Área do professor
+                </button>
+              </div>
+            </div>
+
+            <div class="ls-footer">Sistema de nivelamento educacional</div>
+          </div>
+
+          <div class="ls-right" aria-hidden="true">
+            <div class="ls-right-bg">
+              <div class="ls-grid-lines"></div>
+              <div class="ls-glow ls-glow-1"></div>
+              <div class="ls-glow ls-glow-2"></div>
+            </div>
+            <div class="ls-right-content">
+              <div class="ls-stat-card">
+                <div class="ls-stat-label">Progresso da turma</div>
+                <div class="ls-stat-value">82%</div>
+                <div class="ls-bar-track">
+                  <div class="ls-bar-fill"></div>
+                </div>
+              </div>
+
+              <div class="ls-subject-row">
+                <div class="ls-subject-item">
+                  <div class="ls-subject-dot ls-dot-blue"></div>
+                  <span class="ls-subject-name">Matemática</span>
+                  <span class="ls-subject-score">78%</span>
+                  <span class="ls-badge ls-badge-med">médio</span>
+                </div>
+                <div class="ls-subject-item">
+                  <div class="ls-subject-dot ls-dot-green"></div>
+                  <span class="ls-subject-name">Português</span>
+                  <span class="ls-subject-score">91%</span>
+                  <span class="ls-badge ls-badge-ok">ótimo</span>
+                </div>
+                <div class="ls-subject-item">
+                  <div class="ls-subject-dot ls-dot-amber"></div>
+                  <span class="ls-subject-name">Ciências</span>
+                  <span class="ls-subject-score">65%</span>
+                  <span class="ls-badge ls-badge-med">médio</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button id="dev-skip-login" class="dev-skip-login" type="button" aria-label="Atalho de teste para pular login"></button>
+      </section>
+
+
+
+      <section id="student-area-screen" class="screen" aria-label="Área do aluno">
+        <div class="student-area-shell">
+          <div class="student-area-topbar">
+            <div>
+              <span class="dashboard-detail-title">Área do aluno</span>
+              <h1 class="student-area-title">Minhas trilhas</h1>
+              <p id="student-area-subtitle" class="subtitle">Entre com nome e turma para ver as trilhas enviadas pelo professor.</p>
+            </div>
+            <button id="back-from-student-area" class="secondary-button" type="button">Voltar</button>
+          </div>
+
+          <div class="student-area-grid">
+            <aside class="student-area-sidebar">
+              <div class="student-area-summary">
+                <span class="dashboard-detail-title">Progresso</span>
+                <strong id="student-area-progress-value">0%</strong>
+                <span id="student-area-progress-copy">Nenhuma trilha aberta ainda.</span>
+              </div>
+              <div id="student-journey-list" class="student-journey-list"></div>
+            </aside>
+
+            <section class="student-journey-view">
+              <div id="student-area-empty" class="student-area-empty">
+                <span class="student-area-empty-icon" aria-hidden="true">⌁</span>
+                <h2>Suas trilhas aparecerão aqui</h2>
+                <p>Quando o professor gerar uma trilha para seu nome e turma, ela fica disponível nesta área.</p>
+              </div>
+              <div id="student-journey-detail" class="student-journey-detail" hidden></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Tela 1: Boas-vindas -->
+      <section id="welcome-screen" class="screen" aria-label="Boas-vindas">
+        <p class="subtitle">
+          <span class="subject-inline-icon" id="subject-symbol-welcome" aria-hidden="true">Σ</span>
+          Este teste identifica seu nível atual em <strong id="subject-name-welcome">Matemática</strong> e orienta a trilha de estudo mais adequada.
+        </p>
+
+        <div class="subject-selector" aria-label="Escolha a disciplina para nivelamento">
+          <button class="subject-pill active" data-subject="matematica">
+            <span class="subject-pill-dot" aria-hidden="true"></span>
+            Matemática
+          </button>
+          <button class="subject-pill" data-subject="portugues">
+            <span class="subject-pill-dot" aria-hidden="true"></span>
+            Português
+          </button>
+          <button class="subject-pill" data-subject="ciencias">
+            <span class="subject-pill-dot" aria-hidden="true"></span>
+            Ciências
+          </button>
+          <button class="subject-pill" data-subject="historia">
+            <span class="subject-pill-dot" aria-hidden="true"></span>
+            História
+          </button>
+          <button class="subject-pill" data-subject="geografia">
+            <span class="subject-pill-dot" aria-hidden="true"></span>
+            Geografia
+          </button>
+          <button class="subject-pill" data-subject="japones">
+            <span class="subject-pill-dot" aria-hidden="true"></span>
+            Japonês
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Como funciona o teste?</div>
+            <span class="card-badge">Duração média: 5 min</span>
+          </div>
+          <div class="card-body">
+            Você responderá a perguntas adaptativas de dificuldade crescente. Responda com atenção para receber um diagnóstico mais preciso.
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-pill">
+            <span class="metric-label">Desempenho</span>
+            <span class="metric-value" id="welcome-xp">0 XP</span>
+            <span class="metric-sub">Pontuação acumulada no teste</span>
+          </div>
+          <div class="metric-pill">
+            <span class="metric-label">Níveis</span>
+            <span class="metric-value">1 a 4</span>
+            <span class="metric-sub">De Iniciante a Avançado</span>
+          </div>
+        </div>
+
+        <button id="start-test" class="primary-button">
+          Iniciar diagnóstico
+          <span aria-hidden="true">➜</span>
+        </button>
+      </section>
+
+      <!-- Tela 2: Questões -->
+      <section id="quiz-screen" class="screen" aria-label="Teste de nivelamento">
+        <div class="quiz-topbar">
+          <button id="quiz-back-button" class="back-arrow-button" type="button" aria-label="Voltar para escolher a matéria">
+            <span aria-hidden="true">←</span>
+          </button>
+        </div>
+
+        <div class="card diagnostic-question-card">
+          <div class="question-header">
+            <div class="question-title" id="question-title">Questão 1</div>
+          </div>
+          <div class="question-text" id="question-text">
+            Texto da questão
+          </div>
+
+          <div class="options" id="options-container" role="group" aria-label="Alternativas da questão"></div>
+
+          <div id="feedback-banner" class="feedback-banner" aria-live="polite"></div>
+
+          <div class="progress-row">
+            <span id="question-counter">1 / 1</span>
+            <div class="progress-bar" id="progress-bar" role="progressbar" aria-label="Progresso do teste" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="progress-bar-fill" id="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <button id="next-question" class="primary-button" disabled>
+          Confirmar resposta
+        </button>
+      </section>
+
+      <!-- Tela 3: Resultado -->
+      <section id="result-screen" class="screen" aria-label="Resultado do nível">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title"><span class="subject-inline-icon" id="subject-symbol-result" aria-hidden="true">Σ</span>Seu nível inicial em <span id="subject-name-result">Matemática</span></div>
+            <span class="card-badge" id="result-badge">Nivelamento concluído</span>
+          </div>
+          <div>
+            <p class="result-level" id="result-level">Nível 1 · Iniciante</p>
+            <p class="result-diagnosis" id="result-diagnosis">🎯 Diagnóstico: análise em preparação.</p>
+            <p class="result-text" id="result-text">
+              Texto do resultado.
+            </p>
+          </div>
+          <div class="chips-row" id="skills-chips">
+            <!-- preenchido via JS -->
+          </div>
+
+          <div class="diagnostic-grid">
+            <div class="metric-pill">
+              <span class="metric-label">Ponto forte</span>
+              <span class="metric-value" id="result-strong-skill">-</span>
+              <span class="metric-sub">Habilidade com melhor desempenho</span>
+            </div>
+            <div class="metric-pill metric-warning">
+              <span class="metric-label">A reforçar</span>
+              <span class="metric-value" id="result-weak-skill">-</span>
+              <span class="metric-sub">Habilidade que precisa de mais apoio</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Maior domínio</span>
+              <span class="metric-value" id="result-strong-cognitive">-</span>
+              <span class="metric-sub">Dimensão cognitiva mais forte</span>
+            </div>
+            <div class="metric-pill">
+              <span class="metric-label">Maior dificuldade</span>
+              <span class="metric-value" id="result-weak-cognitive">-</span>
+              <span class="metric-sub">Dimensão cognitiva a desenvolver</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metrics-row">
+          <div class="metric-pill">
+            <span class="metric-label">XP ganho no teste</span>
+            <span class="metric-value" id="result-xp">0 XP</span>
+            <span class="metric-sub" id="result-accuracy">Taxa de acertos: 0%</span>
+          </div>
+          <div class="metric-pill">
+            <span class="metric-label">Trilha sugerida</span>
+            <span class="metric-value" id="result-track">Reforço básico</span>
+            <span class="metric-sub trail-steps" id="result-next-steps">Próximos passos recomendados</span>
+          </div>
+        </div>
+
+        <p class="result-caption" id="result-caption">Resultado baseado em desempenho por habilidade e nível cognitivo.</p>
+        <p class="send-status" id="send-status" aria-live="polite">Pronto para envio.</p>
+
+        <div class="result-actions">
+          <button id="back-to-start" class="secondary-button">
+            Voltar ao início
+          </button>
+          <button id="restart-test" class="secondary-button">
+            Refazer teste
+          </button>
+          <button id="go-to-missions" class="primary-button">
+            <span id="send-button-label">Enviar resultado</span>
+            <span id="send-button-icon" aria-hidden="true">📤</span>
+          </button>
+        </div>
+      </section>
+
+
+
+      <section id="teacher-login-screen" class="screen" aria-label="Acesso do professor">
+        <div class="teacher-login-box">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Área do professor</div>
+              <span class="card-badge">Acesso restrito</span>
+            </div>
+
+            <p class="subtitle">
+              Informe a senha de acesso para abrir o dashboard de acompanhamento.
+            </p>
+
+            <label>
+              <span class="login-label">Senha</span>
+              <input
+                id="teacher-password"
+                class="login-input"
+                type="password"
+                placeholder="Digite a senha"
+                autocomplete="off"
+              >
+            </label>
+
+            <div id="teacher-error" class="teacher-error">
+              Senha incorreta. Tente novamente.
+            </div>
+
+            <div class="teacher-login-actions">
+              <button id="back-from-teacher-login" class="secondary-button" type="button">Voltar</button>
+              <button id="enter-dashboard" class="primary-button" type="button">Entrar</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="dashboard-screen" class="screen" aria-label="Dashboard de acompanhamento">
+        <div class="dashboard-shell">
+          <div class="dashboard-topbar">
+            <div>
+              <h1 class="dashboard-title">Painel de acompanhamento</h1>
+              <p class="subtitle dashboard-subtitle">
+                Visão geral do diagnóstico por turma, disciplina e aluno.
+              </p>
+            </div>
+
+            <div class="dashboard-topbar-actions">
+              <div class="status-strip">
+                <span class="status-dot"></span>
+                <span id="dashboard-status-label">Dados atualizados</span>
+              </div>
+              <button id="refresh-dashboard" class="secondary-button" type="button">Atualizar</button>
+              <button id="open-question-bank" class="secondary-button" type="button">Banco de questões</button>
+              <button id="open-journey-manager" class="secondary-button" type="button">Gerenciar trilhas</button>
+              <button id="generate-dashboard-report" class="primary-button dashboard-report-button" type="button">Gerar relatório PDF</button>
+              <button id="back-from-dashboard" class="secondary-button" type="button">Voltar</button>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <aside class="dashboard-sidebar">
+              <div class="dashboard-panel">
+                <h2 class="dashboard-panel-title">Navegação</h2>
+                <p class="dashboard-panel-subtitle">Resumo pedagógico da turma.</p>
+
+                <div class="dashboard-nav" aria-label="Navegação do dashboard">
+                  <button class="dashboard-nav-item active" type="button" data-target="dashboard-summary-section">Resumo geral</button>
+                  <button class="dashboard-nav-item" type="button" data-target="dashboard-students-section">Alunos avaliados</button>
+                  <button class="dashboard-nav-item" type="button" data-target="dashboard-engagement-section">Ranking e streak</button>
+                  <button class="dashboard-nav-item" type="button" data-target="dashboard-detail-section">Habilidades</button>
+                  <button class="dashboard-nav-item" type="button" data-target="dashboard-cognitive-section">Dimensão cognitiva</button>
+                  <button class="dashboard-nav-item" type="button" data-target="dashboard-alerts-section">Alertas</button>
+                </div>
+              </div>
+
+              <div class="dashboard-panel">
+                <h2 class="dashboard-panel-title">Filtros</h2>
+                <p class="dashboard-panel-subtitle">Refine os dados exibidos.</p>
+
+                <div class="dashboard-filters">
+                  <label>
+                    <span class="dashboard-label">Busca por aluno</span>
+                    <input id="dashboard-search" class="dashboard-input" type="text" placeholder="Ex.: João Pedro">
+                  </label>
+
+                  <label>
+                    <span class="dashboard-label">Turma</span>
+                    <select id="dashboard-classroom-filter" class="dashboard-select">
+                      <option>Todas</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span class="dashboard-label">Disciplina</span>
+                    <select id="dashboard-subject-filter" class="dashboard-select">
+                      <option>Todas</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </aside>
+
+            <div class="dashboard-content">
+              <div class="dashboard-metrics" id="dashboard-summary-section">
+                <div class="dashboard-metric-card">
+                  <div class="dashboard-metric-label">Alunos avaliados</div>
+                  <div class="dashboard-metric-value" id="dashboard-total-students">0</div>
+                  <div class="dashboard-metric-sub" id="dashboard-total-students-sub">Aguardando dados.</div>
+                </div>
+
+                <div class="dashboard-metric-card">
+                  <div class="dashboard-metric-label">Nível médio</div>
+                  <div class="dashboard-metric-value" id="dashboard-average-level">-</div>
+                  <div class="dashboard-metric-sub" id="dashboard-average-level-sub">Aguardando dados.</div>
+                </div>
+
+                <div class="dashboard-metric-card">
+                  <div class="dashboard-metric-label">Taxa média</div>
+                  <div class="dashboard-metric-value" id="dashboard-average-accuracy">0%</div>
+                  <div class="dashboard-metric-sub" id="dashboard-average-accuracy-sub">Aguardando dados.</div>
+                </div>
+
+                <div class="dashboard-metric-card">
+                  <div class="dashboard-metric-label">Maior alerta</div>
+                  <div class="dashboard-metric-value" id="dashboard-main-alert">-</div>
+                  <div class="dashboard-metric-sub" id="dashboard-main-alert-sub">Aguardando dados.</div>
+                </div>
+              </div>
+
+              <div class="dashboard-panel" id="dashboard-level-section">
+                <h2 class="dashboard-panel-title">Distribuição por nível</h2>
+                <p class="dashboard-panel-subtitle">Quantidade de alunos por nível.</p>
+                <div id="dashboard-level-chart"></div>
+              </div>
+
+              <div class="dashboard-engagement-grid" id="dashboard-engagement-section">
+                <div class="dashboard-panel dashboard-ranking-panel">
+                  <div class="dashboard-panel-header">
+                    <div>
+                      <h2 class="dashboard-panel-title">Ranking de alunos</h2>
+                      <p class="dashboard-panel-subtitle">Top desempenho no recorte atual.</p>
+                    </div>
+                    <span class="dashboard-badge success" id="dashboard-ranking-count">0 alunos</span>
+                  </div>
+                  <div class="dashboard-ranking-list" id="dashboard-ranking-list"></div>
+                </div>
+
+                <div class="dashboard-panel dashboard-streak-panel">
+                  <div class="dashboard-panel-header">
+                    <div>
+                      <h2 class="dashboard-panel-title">Streak de estudo</h2>
+                      <p class="dashboard-panel-subtitle">Sequência por dias com registros.</p>
+                    </div>
+                    <span class="dashboard-badge warning" id="dashboard-streak-count">0 dias</span>
+                  </div>
+                  <div class="dashboard-week-strip" id="dashboard-week-strip"></div>
+                  <div class="dashboard-streak-list" id="dashboard-streak-list"></div>
+                </div>
+              </div>
+
+              <div class="dashboard-sections">
+                <div class="dashboard-panel" id="dashboard-cognitive-section">
+                  <h2 class="dashboard-panel-title">Dimensão cognitiva</h2>
+                  <p class="dashboard-panel-subtitle">Desempenho médio por tipo de habilidade.</p>
+
+                  <div class="dashboard-list" id="dashboard-cognitive-list"></div>
+                </div>
+
+                <div class="dashboard-panel" id="dashboard-alerts-section">
+                  <h2 class="dashboard-panel-title">Alertas pedagógicos</h2>
+                  <p class="dashboard-panel-subtitle">Pontos que merecem atenção.</p>
+
+                  <div class="dashboard-alerts" id="dashboard-alerts"></div>
+                </div>
+              </div>
+
+              <div class="dashboard-panel" id="dashboard-students-section">
+                <h2 class="dashboard-panel-title">Lista de alunos</h2>
+                <p class="dashboard-panel-subtitle">Resultados individuais da turma.</p>
+
+                <div class="dashboard-table-wrap">
+                  <table class="dashboard-table">
+                    <thead>
+                      <tr>
+                        <th>Aluno</th>
+                        <th>Turma</th>
+                        <th>Disciplina</th>
+                        <th>Nível</th>
+                        <th>XP</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dashboard-table-body"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="dashboard-panel" id="dashboard-detail-section">
+                <h2 class="dashboard-panel-title">Detalhe do aluno</h2>
+                <p class="dashboard-panel-subtitle">Exemplo de leitura individual.</p>
+
+                <div class="dashboard-detail-grid">
+                  <div class="dashboard-detail-box">
+                    <div class="dashboard-detail-title">Aluno</div>
+                    <div class="dashboard-detail-value" id="dashboard-detail-name">-</div>
+                    <div class="dashboard-detail-sub" id="dashboard-detail-meta">Selecione um aluno.</div>
+                  </div>
+
+                  <div class="dashboard-detail-box">
+                    <div class="dashboard-detail-title">Nível identificado</div>
+                    <div class="dashboard-detail-value" id="dashboard-detail-level">-</div>
+                    <div class="dashboard-detail-sub" id="dashboard-detail-level-sub">Sem dado selecionado.</div>
+                  </div>
+
+                  <div class="dashboard-detail-box">
+                    <div class="dashboard-detail-title">Ponto forte</div>
+                    <div class="dashboard-detail-value" id="dashboard-detail-strong">-</div>
+                    <div class="dashboard-detail-sub" id="dashboard-detail-strong-sub">Aguardando seleção.</div>
+                  </div>
+
+                  <div class="dashboard-detail-box">
+                    <div class="dashboard-detail-title">A reforçar</div>
+                    <div class="dashboard-detail-value" id="dashboard-detail-weak">-</div>
+                    <div class="dashboard-detail-sub" id="dashboard-detail-weak-sub">Aguardando seleção.</div>
+                  </div>
+
+                  <div class="dashboard-detail-box dashboard-detail-box-wide">
+                    <div class="dashboard-detail-title">Questão dissertativa</div>
+                    <div class="dashboard-detail-value" id="dashboard-detail-discursive-skill">-</div>
+                    <div class="dashboard-detail-sub" id="dashboard-detail-discursive-question">Sem questão registrada.</div>
+                  </div>
+
+                  <div class="dashboard-detail-box dashboard-detail-box-wide">
+                    <div class="dashboard-detail-title">Resposta escrita do aluno</div>
+                    <div class="dashboard-detail-value" id="dashboard-detail-discursive-cognitive">-</div>
+                    <div class="dashboard-detail-sub dashboard-discursive-answer" id="dashboard-detail-discursive-answer">Sem resposta registrada.</div>
+                  </div>
+                </div>
+
+                <div class="dashboard-intervention-panel" id="dashboard-intervention-panel">
+                  <div>
+                    <h3 class="dashboard-intervention-title">Intervenção com material do professor</h3>
+                    <p class="dashboard-intervention-copy" id="dashboard-intervention-copy">Selecione um aluno para criar uma trilha baseada no diagnóstico e em um PDF.</p>
+                  </div>
+                  <button id="open-journey-generator" class="primary-button dashboard-journey-button" type="button" disabled>Criar trilha com PDF</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="question-bank-modal" class="guide-modal" hidden aria-hidden="true">
+        <div class="guide-modal-dialog teacher teacher-tool-dialog" role="dialog" aria-modal="true" aria-labelledby="question-bank-title">
+          <div class="guide-card-header">
+            <div>
+              <h2 id="question-bank-title" class="guide-card-title">Banco de questões</h2>
+              <p class="guide-card-subtitle">Crie, edite, importe e versione as questões usadas pelo diagnóstico.</p>
+            </div>
+            <button id="close-question-bank" class="guide-close" type="button">Fechar</button>
+          </div>
+
+          <div class="dashboard-question-toolbar">
+            <label>
+              <span class="dashboard-label">Matéria</span>
+              <select id="dashboard-question-subject" class="dashboard-select"></select>
+            </label>
+            <div class="question-bank-toolbar-actions">
+              <button id="new-question" class="primary-button" type="button">Nova questão</button>
+              <label class="secondary-button question-import-button" for="question-import-input">Importar JSON</label>
+              <input id="question-import-input" type="file" accept="application/json,.json" hidden>
+              <button id="export-questions" class="secondary-button" type="button">Exportar</button>
+            </div>
+          </div>
+          <p id="question-bank-status" class="dashboard-report-hint" aria-live="polite">As edições dos slots existentes entram nas próximas sessões do diagnóstico.</p>
+
+          <form id="question-editor" class="question-editor" hidden>
+            <input id="question-editor-original-id" type="hidden">
+            <div class="question-editor-header">
+              <div>
+                <span class="dashboard-label">Editor</span>
+                <h3 id="question-editor-title">Nova questão</h3>
+              </div>
+              <button id="cancel-question-editor" class="secondary-button" type="button">Cancelar</button>
+            </div>
+            <div class="question-editor-grid">
+              <label>
+                <span class="dashboard-label">Identificador</span>
+                <input id="question-editor-id" class="dashboard-input" type="number" min="1" required>
+              </label>
+              <label>
+                <span class="dashboard-label">Tipo</span>
+                <select id="question-editor-type" class="dashboard-select">
+                  <option value="multipla_escolha">Múltipla escolha</option>
+                  <option value="dissertativa">Dissertativa</option>
+                </select>
+              </label>
+              <label>
+                <span class="dashboard-label">Dificuldade</span>
+                <select id="question-editor-difficulty" class="dashboard-select">
+                  <option value="fácil">Fácil</option>
+                  <option value="médio">Médio</option>
+                  <option value="difícil">Difícil</option>
+                </select>
+              </label>
+              <label>
+                <span class="dashboard-label">Dimensão cognitiva</span>
+                <select id="question-editor-cognitive" class="dashboard-select">
+                  <option value="memoria">Memória</option>
+                  <option value="interpretacao">Interpretação</option>
+                  <option value="raciocinio">Raciocínio</option>
+                </select>
+              </label>
+              <label class="question-editor-wide">
+                <span class="dashboard-label">Habilidade</span>
+                <input id="question-editor-skill" class="dashboard-input" type="text" required>
+              </label>
+              <label class="question-editor-wide">
+                <span class="dashboard-label">Enunciado</span>
+                <textarea id="question-editor-text" class="dashboard-input question-editor-textarea" required></textarea>
+              </label>
+            </div>
+            <fieldset id="question-editor-options" class="question-editor-options">
+              <legend>Alternativas e gabarito</legend>
+              <label><input type="radio" name="question-correct-option" value="0" required><input class="dashboard-input" data-question-option="0" placeholder="Alternativa A"></label>
+              <label><input type="radio" name="question-correct-option" value="1"><input class="dashboard-input" data-question-option="1" placeholder="Alternativa B"></label>
+              <label><input type="radio" name="question-correct-option" value="2"><input class="dashboard-input" data-question-option="2" placeholder="Alternativa C"></label>
+              <label><input type="radio" name="question-correct-option" value="3"><input class="dashboard-input" data-question-option="3" placeholder="Alternativa D"></label>
+            </fieldset>
+            <label id="question-editor-answer-wrap" class="question-editor-answer" hidden>
+              <span class="dashboard-label">Resposta de referência</span>
+              <textarea id="question-editor-answer" class="dashboard-input question-editor-textarea"></textarea>
+            </label>
+            <div class="question-editor-actions">
+              <button id="save-question" class="primary-button" type="submit">Salvar questão</button>
+            </div>
+          </form>
+          <div id="dashboard-question-list" class="dashboard-question-list"></div>
+        </div>
+      </div>
+
+      <div id="journey-manager-modal" class="guide-modal" hidden aria-hidden="true">
+        <div class="guide-modal-dialog teacher teacher-tool-dialog journey-manager-dialog" role="dialog" aria-modal="true" aria-labelledby="journey-manager-title">
+          <div class="guide-card-header">
+            <div>
+              <h2 id="journey-manager-title" class="guide-card-title">Gerenciar trilhas</h2>
+              <p class="guide-card-subtitle">Identifique duplicadas, renomeie, arquive ou exclua trilhas geradas.</p>
+            </div>
+            <button id="close-journey-manager" class="guide-close" type="button">Fechar</button>
+          </div>
+          <div class="journey-manager-toolbar">
+            <label>
+              <span class="dashboard-label">Buscar</span>
+              <input id="journey-manager-search" class="dashboard-input" type="search" placeholder="Aluno, turma, matéria ou título">
+            </label>
+            <label class="journey-manager-archived-filter"><input id="journey-manager-show-archived" type="checkbox"> Mostrar arquivadas</label>
+            <button id="refresh-journey-manager" class="secondary-button" type="button">Atualizar</button>
+          </div>
+          <p id="journey-manager-status" class="dashboard-report-hint" aria-live="polite">Carregando trilhas...</p>
+          <div id="journey-manager-list" class="journey-manager-list"></div>
+        </div>
+      </div>
+
+      <div id="journey-generator-modal" class="guide-modal" hidden aria-hidden="true">
+        <div class="guide-modal-dialog teacher teacher-tool-dialog journey-dialog" role="dialog" aria-modal="true" aria-labelledby="journey-generator-title">
+          <div class="guide-card-header">
+            <div>
+              <h2 id="journey-generator-title" class="guide-card-title">Criar trilha com PDF</h2>
+              <p class="guide-card-subtitle">Transforme o material do professor em uma jornada de reforço alinhada ao diagnóstico do aluno.</p>
+            </div>
+            <button id="close-journey-generator" class="guide-close" type="button">Fechar</button>
+          </div>
+
+          <form id="journey-generator-form" class="journey-generator-form">
+            <div class="journey-context-grid">
+              <div class="journey-context-card">
+                <span class="dashboard-detail-title">Aluno</span>
+                <strong id="journey-student-name">-</strong>
+                <span id="journey-student-meta">Selecione um aluno no dashboard.</span>
+              </div>
+              <div class="journey-context-card warning">
+                <span class="dashboard-detail-title">Foco diagnóstico</span>
+                <strong id="journey-focus-skill">-</strong>
+                <span id="journey-focus-cognitive">A dificuldade cognitiva aparecerá aqui.</span>
+              </div>
+            </div>
+
+            <div class="journey-form-grid">
+              <label class="journey-upload-box" for="journey-pdf-input">
+                <span class="journey-upload-icon" aria-hidden="true">PDF</span>
+                <strong>Enviar material em PDF</strong>
+                <span id="journey-file-name">Escolha o arquivo que servirá de base para a trilha.</span>
+                <input id="journey-pdf-input" name="pdf" type="file" accept="application/pdf,.pdf" required>
+              </label>
+
+              <div class="journey-options-box">
+                <label>
+                  <span class="dashboard-label">Objetivo da intervenção</span>
+                  <textarea id="journey-objective" class="dashboard-input journey-textarea" name="objective" rows="4" placeholder="Ex.: reforçar interpretação de gráficos antes da próxima avaliação."></textarea>
+                </label>
+
+                <div class="journey-inline-fields">
+                  <label>
+                    <span class="dashboard-label">Duração</span>
+                    <select id="journey-duration" class="dashboard-select" name="duration">
+                      <option value="curta">Curta · 3 fases</option>
+                      <option value="padrao" selected>Padrão · 5 fases</option>
+                      <option value="intensiva">Intensiva · 7 fases</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span class="dashboard-label">Tom da trilha</span>
+                    <select id="journey-tone" class="dashboard-select" name="tone">
+                      <option value="acolhedor" selected>Acolhedor</option>
+                      <option value="desafiador">Desafiador</option>
+                      <option value="recuperacao">Recuperação guiada</option>
+                    </select>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <p id="journey-generator-status" class="journey-status" aria-live="polite">Aguardando PDF e aluno selecionado.</p>
+
+            <div class="teacher-tool-actions">
+              <button id="cancel-journey-generator" class="secondary-button" type="button">Cancelar</button>
+              <button id="submit-journey-generator" class="primary-button" type="submit">Gerar jornada</button>
+            </div>
+          </form>
+
+          <div id="journey-generated-output" class="journey-generated-output" hidden></div>
+        </div>
+      </div>
+
+      <div id="report-filter-modal" class="guide-modal" hidden aria-hidden="true">
+        <div class="guide-modal-dialog teacher teacher-tool-dialog compact" role="dialog" aria-modal="true" aria-labelledby="report-filter-title">
+          <div class="guide-card-header">
+            <div>
+              <h2 id="report-filter-title" class="guide-card-title">Gerar relatório PDF</h2>
+              <p class="guide-card-subtitle">Escolha o recorte antes de imprimir ou salvar o relatório.</p>
+            </div>
+            <button id="close-report-filter" class="guide-close" type="button">Fechar</button>
+          </div>
+
+          <div class="report-filter-grid">
+            <div class="report-filter-box">
+              <h3 class="report-filter-heading">Turmas</h3>
+              <div id="report-classroom-options" class="report-checklist"></div>
+              <p class="report-helper">Sem seleção significa todas as turmas carregadas.</p>
+            </div>
+
+            <div class="report-filter-box">
+              <h3 class="report-filter-heading">Matérias</h3>
+              <div id="report-subject-options" class="report-checklist"></div>
+              <p class="report-helper">Selecione uma ou várias disciplinas.</p>
+            </div>
+
+            <div class="report-filter-box">
+              <h3 class="report-filter-heading">Níveis e desempenho</h3>
+              <div id="report-level-options" class="report-checklist"></div>
+              <label>
+                <span class="dashboard-label">Faixa de acertos</span>
+                <select id="report-accuracy-filter" class="dashboard-select">
+                  <option value="all">Todas as faixas</option>
+                  <option value="low">Abaixo de 50%</option>
+                  <option value="middle">De 50% a 85%</option>
+                  <option value="high">Acima de 85%</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="report-filter-box">
+              <h3 class="report-filter-heading">Diagnóstico pedagógico</h3>
+              <div>
+                <span class="dashboard-label">Habilidade a reforçar</span>
+                <div id="report-weak-skill-options" class="report-checklist"></div>
+              </div>
+              <div>
+                <span class="dashboard-label">Dificuldade cognitiva</span>
+                <div id="report-weak-cognitive-options" class="report-checklist"></div>
+              </div>
+            </div>
+
+            <div class="report-filter-box">
+              <h3 class="report-filter-heading">Período</h3>
+              <div class="report-inline-grid">
+                <label>
+                  <span class="dashboard-label">De</span>
+                  <input id="report-date-from" class="dashboard-input" type="date">
+                </label>
+                <label>
+                  <span class="dashboard-label">Até</span>
+                  <input id="report-date-to" class="dashboard-input" type="date">
+                </label>
+              </div>
+              <label>
+                <span class="dashboard-label">Registros</span>
+                <select id="report-record-mode" class="dashboard-select">
+                  <option value="all">Todas as tentativas</option>
+                  <option value="latest-subject">Mais recente por aluno e matéria</option>
+                  <option value="latest-student">Mais recente por aluno</option>
+                </select>
+              </label>
+              <p class="report-helper">Datas vazias incluem todo o histórico disponível.</p>
+            </div>
+
+            <div class="report-filter-box wide">
+              <h3 class="report-filter-heading">Alunos</h3>
+              <label>
+                <span class="dashboard-label">Buscar no nome</span>
+                <input id="report-student-search" class="dashboard-input" type="text" placeholder="Ex.: João Pedro">
+              </label>
+              <div class="report-filter-toolbar">
+                <button id="report-select-visible-students" class="secondary-button" type="button">Selecionar visíveis</button>
+                <button id="report-clear-students" class="secondary-button" type="button">Limpar seleção</button>
+                <button id="report-use-dashboard-filters" class="secondary-button" type="button">Usar filtros do painel</button>
+              </div>
+              <div id="report-student-options" class="report-checklist"></div>
+              <p class="report-helper">Se nenhum aluno for marcado, o relatório inclui todos que combinarem com os outros filtros e com a busca digitada.</p>
+            </div>
+
+            <div class="report-filter-box wide">
+              <h3 class="report-filter-heading">Conteúdo do PDF</h3>
+              <label class="report-check"><input id="report-include-table" type="checkbox" checked> <span>Incluir tabela de resultados individuais.</span></label>
+              <label class="report-check"><input id="report-include-discursives" type="checkbox" checked> <span>Incluir respostas dissertativas do recorte.</span></label>
+              <p id="report-filter-preview" class="report-helper">Carregue os dados para pré-visualizar o recorte.</p>
+            </div>
+          </div>
+
+          <div class="teacher-tool-actions">
+            <button id="cancel-report-filter" class="secondary-button" type="button">Cancelar</button>
+            <button id="confirm-dashboard-report" class="primary-button" type="button">Gerar PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="student-guide" class="guide-modal" hidden aria-hidden="true">
+        <div class="guide-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="student-guide-title">
+          <div class="guide-card-header">
+            <div>
+              <h2 id="student-guide-title" class="guide-card-title">Guia rápido do aluno</h2>
+              <p class="guide-card-subtitle">Este passo a passo aparece no início para orientar quem vai responder o teste.</p>
+            </div>
+            <button id="close-student-guide" class="guide-close" type="button">Fechar</button>
+          </div>
+          <ul class="guide-list">
+            <li>Preencha nome e turma antes de continuar.</li>
+            <li>Escolha a matéria correta antes de iniciar o diagnóstico.</li>
+            <li>O teste é adaptativo: as próximas questões mudam conforme os acertos e erros.</li>
+            <li>Leia com calma, especialmente as perguntas dissertativas.</li>
+            <li>No final, envie o resultado para registrar o diagnóstico.</li>
+          </ul>
+          <div class="guide-highlight">
+            Dica: se você entrou na matéria errada, use a seta de voltar antes de avançar no teste.
+          </div>
+        </div>
+      </div>
+
+      <div id="teacher-guide" class="guide-modal" hidden aria-hidden="true">
+        <div class="guide-modal-dialog teacher" role="dialog" aria-modal="true" aria-labelledby="teacher-guide-title">
+          <div class="guide-card-header">
+            <div>
+              <h2 id="teacher-guide-title" class="guide-card-title">Guia do professor</h2>
+              <p class="guide-card-subtitle">Este painel reúne os resultados enviados pelos alunos e ajuda a interpretar a turma com mais clareza.</p>
+            </div>
+            <button id="close-teacher-guide" class="guide-close" type="button">Fechar</button>
+          </div>
+          <ul class="guide-list">
+            <li>O aluno começa pelo login, escolhe a disciplina e responde um teste adaptativo com questões objetivas e dissertativas.</li>
+            <li>O fluxo adaptativo muda a trilha conforme acertos, erros e respostas parciais, então nem todos os alunos percorrem exatamente as mesmas perguntas.</li>
+            <li>O resultado final considera nível identificado, desempenho por habilidade, dimensão cognitiva, XP, acertos, erros e respostas parciais.</li>
+            <li>Ao clicar em <strong>Enviar resultado</strong>, o sistema registra os dados na planilha e o dashboard passa a ler esses registros.</li>
+            <li>Na coluna de navegação, use os atalhos para ir direto ao resumo geral, lista de alunos, habilidades, dimensão cognitiva e alertas.</li>
+            <li>Na tabela, clicar no nome do aluno abre o detalhe individual com ponto forte, habilidade a reforçar e leitura cognitiva.</li>
+            <li>Se um nome aparecer trocado, normalmente existe uma linha antiga de teste na planilha; os registros novos já entram no formato correto.</li>
+          </ul>
+          <div class="guide-highlight">
+            Leitura pedagógica sugerida: use o resumo para entender a turma, os alertas para priorizar intervenção e o detalhe do aluno para planejar reforço individual.
+          </div>
+        </div>
+      </div>
+
+      <p class="footer-text">
+        Sistema de nivelamento educacional • Resultados enviados para registro.
+      </p>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

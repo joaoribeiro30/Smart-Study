@@ -8,6 +8,8 @@ Enquanto estas variáveis estiverem vazias, o Smart Study continua usando os arq
 2. Abra `SQL Editor`.
 3. Cole e execute o conteúdo de `supabase-schema.sql`.
 
+> Se o seu projeto Supabase já estava configurado, execute novamente o arquivo completo. Ele inclui a migração do campo `turno`, necessária para manter separadas as trilhas e o progresso de alunos da mesma turma em horários diferentes.
+
 ## 2. Pegar chaves
 
 No Supabase, vá em `Project Settings > API` e copie:
@@ -58,3 +60,4 @@ Se estiver certo, aparecerá:
 - Jornada gerada por PDF: salva localmente e tenta salvar no Supabase.
 - Minhas trilhas: se Supabase estiver configurado, lê do Supabase; se falhar, usa local.
 - Progresso do aluno: salva localmente e tenta fazer upsert no Supabase.
+- Identidade do aluno: nome + turma + turno. Isso evita misturar trilhas ou progresso entre turnos diferentes.

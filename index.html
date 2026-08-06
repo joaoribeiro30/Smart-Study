@@ -60,10 +60,22 @@
                     <input id="student-classroom" type="hidden" value="">
                   </span>
                 </label>
+
+                <label class="ls-field" for="student-shift">
+                  <span class="ls-label">Turno</span>
+                  <select id="student-shift" class="ls-input login-input">
+                    <option value="">Selecione o turno</option>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
+                    <option value="Integral">Integral</option>
+                    <option value="Não informado">Não informado (cadastros antigos)</option>
+                  </select>
+                </label>
               </div>
 
               <p class="login-helper" id="login-hint" aria-live="polite">
-                Preencha nome e turma para continuar.
+                Preencha nome, turma e turno para continuar.
               </p>
 
               <div class="student-login-actions ls-actions">
@@ -131,7 +143,7 @@
             <div>
               <span class="dashboard-detail-title">Área do aluno</span>
               <h1 class="student-area-title">Minhas trilhas</h1>
-              <p id="student-area-subtitle" class="subtitle">Entre com nome e turma para ver as trilhas enviadas pelo professor.</p>
+              <p id="student-area-subtitle" class="subtitle">Entre com nome, turma e turno para ver as trilhas enviadas pelo professor.</p>
             </div>
             <button id="back-from-student-area" class="secondary-button" type="button">Voltar</button>
           </div>
@@ -150,7 +162,7 @@
               <div id="student-area-empty" class="student-area-empty">
                 <span class="student-area-empty-icon" aria-hidden="true">⌁</span>
                 <h2>Suas trilhas aparecerão aqui</h2>
-                <p>Quando o professor gerar uma trilha para seu nome e turma, ela fica disponível nesta área.</p>
+                <p>Quando o professor gerar uma trilha para seu nome, turma e turno, ela fica disponível nesta área.</p>
               </div>
               <div id="student-journey-detail" class="student-journey-detail" hidden></div>
             </section>
@@ -417,6 +429,13 @@
                     <span class="dashboard-label">Turma</span>
                     <select id="dashboard-classroom-filter" class="dashboard-select">
                       <option>Todas</option>
+                    </select>
+                  </label>
+
+                  <label>
+                    <span class="dashboard-label">Turno</span>
+                    <select id="dashboard-shift-filter" class="dashboard-select">
+                      <option>Todos</option>
                     </select>
                   </label>
 
@@ -780,6 +799,12 @@
             </div>
 
             <div class="report-filter-box">
+              <h3 class="report-filter-heading">Turnos</h3>
+              <div id="report-shift-options" class="report-checklist"></div>
+              <p class="report-helper">Separe os resultados por horário de aula.</p>
+            </div>
+
+            <div class="report-filter-box">
               <h3 class="report-filter-heading">Matérias</h3>
               <div id="report-subject-options" class="report-checklist"></div>
               <p class="report-helper">Selecione uma ou várias disciplinas.</p>
@@ -874,7 +899,7 @@
             <button id="close-student-guide" class="guide-close" type="button">Fechar</button>
           </div>
           <ul class="guide-list">
-            <li>Preencha nome e turma antes de continuar.</li>
+            <li>Preencha nome, turma e turno antes de continuar.</li>
             <li>Escolha a matéria correta antes de iniciar o diagnóstico.</li>
             <li>O teste é adaptativo: as próximas questões mudam conforme os acertos e erros.</li>
             <li>Leia com calma, especialmente as perguntas dissertativas.</li>

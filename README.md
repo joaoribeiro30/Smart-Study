@@ -8,6 +8,7 @@ Plataforma de aprendizagem adaptativa para diagnosticar dificuldades, criar tril
 
 - Aplica um diagnóstico adaptativo por disciplina.
 - Identifica nível, habilidades e pontos de atenção do estudante.
+- Separa estudantes e resultados por nome, turma e turno.
 - Gera trilhas de aprendizagem em cards sequenciais, com barra de progresso.
 - Evita que o aluno avance livremente pelo conteúdo antes de concluir cada etapa.
 - Permite que professores criem trilhas a partir de materiais em PDF.

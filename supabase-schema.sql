@@ -14,8 +14,10 @@ create table if not exists public.journeys (
   journey jsonb not null default '{}'::jsonb,
   student_name text not null default '',
   student_classroom text not null default '',
+  student_shift text not null default '',
   student_name_norm text not null default '',
   student_classroom_norm text not null default '',
+  student_shift_norm text not null default '',
   subject text not null default ''
 );
 
@@ -23,8 +25,10 @@ create table if not exists public.student_progress (
   id bigint generated always as identity primary key,
   student_name text not null default '',
   student_classroom text not null default '',
+  student_shift text not null default '',
   student_name_norm text not null default '',
   student_classroom_norm text not null default '',
+  student_shift_norm text not null default '',
   journey_id uuid not null references public.journeys(id) on delete cascade,
   answers jsonb not null default '{}'::jsonb,
   total_questions integer not null default 0 check (total_questions >= 0),
@@ -33,16 +37,27 @@ create table if not exists public.student_progress (
   xp integer not null default 0 check (xp >= 0),
   status text not null default 'not_started' check (status in ('not_started', 'in_progress', 'completed')),
   updated_at timestamptz not null default now(),
-  unique (student_name_norm, student_classroom_norm, journey_id)
+  unique (student_name_norm, student_classroom_norm, student_shift_norm, journey_id)
 );
 
+-- Migração segura para projetos que já criaram as tabelas antes do campo turno.
+alter table public.journeys add column if not exists student_shift text not null default '';
+alter table public.journeys add column if not exists student_shift_norm text not null default '';
+alter table public.student_progress add column if not exists student_shift text not null default '';
+alter table public.student_progress add column if not exists student_shift_norm text not null default '';
+alter table public.student_progress drop constraint if exists student_progress_student_name_norm_student_classroom_norm_journey_id_key;
+create unique index if not exists student_progress_identity_shift_key
+  on public.student_progress (student_name_norm, student_classroom_norm, student_shift_norm, journey_id);
+
 -- Consultas da área do aluno filtram por nome normalizado + turma e ordenam por data.
+drop index if exists public.journeys_student_lookup_idx;
 create index if not exists journeys_student_lookup_idx
-  on public.journeys (student_name_norm, student_classroom_norm, created_at desc);
+  on public.journeys (student_name_norm, student_classroom_norm, student_shift_norm, created_at desc);
 
 -- Upsert/leitura de progresso usa nome + turma + jornada.
+drop index if exists public.student_progress_lookup_idx;
 create index if not exists student_progress_lookup_idx
-  on public.student_progress (student_name_norm, student_classroom_norm, journey_id);
+  on public.student_progress (student_name_norm, student_classroom_norm, student_shift_norm, journey_id);
 
 -- Opcional para filtros futuros do dashboard do professor.
 create index if not exists journeys_subject_created_idx

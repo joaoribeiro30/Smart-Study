@@ -168,7 +168,16 @@ function normalizeLookup(value = "") {
     .trim();
 }
 
-function getStudentProgressKey(studentName, studentClassroom, journeyId) {
+function normalizeStudentShift(value = "") {
+  const normalized = normalizeLookup(value);
+  return normalized === "nao informado" ? "" : normalized;
+}
+
+function getStudentProgressKey(studentName, studentClassroom, studentShift, journeyId) {
+  return [normalizeLookup(studentName), normalizeLookup(studentClassroom), normalizeStudentShift(studentShift), journeyId].join("::");
+}
+
+function getLegacyStudentProgressKey(studentName, studentClassroom, journeyId) {
   return [normalizeLookup(studentName), normalizeLookup(studentClassroom), journeyId].join("::");
 }
 
@@ -224,18 +233,29 @@ function mapJourneyRecordToRow(record) {
     journey: record.journey || {},
     student_name: student.studentName || "",
     student_classroom: student.studentClassroom || "",
+    student_shift: student.studentShift || "",
     student_name_norm: normalizeLookup(student.studentName || ""),
     student_classroom_norm: normalizeLookup(student.studentClassroom || ""),
+    student_shift_norm: normalizeStudentShift(student.studentShift || ""),
     subject: student.subject || "",
   };
 }
 
 function mapJourneyRowToRecord(row) {
+  const metadata = row.metadata || {};
   return {
     id: row.id,
     createdAt: row.created_at,
     pdfFile: row.pdf_file,
-    metadata: row.metadata || {},
+    metadata: {
+      ...metadata,
+      student: {
+        ...(metadata.student || {}),
+        studentName: metadata.student?.studentName || row.student_name || "",
+        studentClassroom: metadata.student?.studentClassroom || row.student_classroom || "",
+        studentShift: metadata.student?.studentShift || row.student_shift || "",
+      },
+    },
     provider: row.provider,
     answerReviewStatus: row.answer_review_status,
     pdfTextExtracted: row.pdf_text_extracted,
@@ -251,12 +271,14 @@ async function saveJourneyToSupabase(record) {
   });
 }
 
-async function loadStudentJourneysFromSupabase(name, classroom) {
+async function loadStudentJourneysFromSupabase(name, classroom, shift = "") {
   const normalizedName = encodeURIComponent(normalizeLookup(name));
   const normalizedClassroom = encodeURIComponent(normalizeLookup(classroom));
+  const normalizedShift = encodeURIComponent(normalizeStudentShift(shift));
   const rows = await supabaseRequest(
     "/rest/v1/journeys?select=*&student_name_norm=eq." + normalizedName +
       "&student_classroom_norm=eq." + normalizedClassroom +
+      "&student_shift_norm=eq." + normalizedShift +
       "&order=created_at.desc&limit=" + STUDENT_JOURNEY_LIMIT
   );
   return Array.isArray(rows) ? rows.map(mapJourneyRowToRecord).filter((record) => !isJourneyArchived(record)) : [];
@@ -282,14 +304,16 @@ function mapProgressRowToProgress(row, totalQuestions) {
   };
 }
 
-async function loadProgressRowsFromSupabase(name, classroom, journeyIds = []) {
+async function loadProgressRowsFromSupabase(name, classroom, shift = "", journeyIds = []) {
   if (!journeyIds.length) return {};
   const normalizedName = encodeURIComponent(normalizeLookup(name));
   const normalizedClassroom = encodeURIComponent(normalizeLookup(classroom));
+  const normalizedShift = encodeURIComponent(normalizeStudentShift(shift));
   const ids = journeyIds.map((id) => String(id).replace(/[^a-zA-Z0-9-]/g, "")).filter(Boolean);
   const rows = await supabaseRequest(
     "/rest/v1/student_progress?select=*&student_name_norm=eq." + normalizedName +
       "&student_classroom_norm=eq." + normalizedClassroom +
+      "&student_shift_norm=eq." + normalizedShift +
       "&journey_id=in.(" + ids.join(",") + ")"
   );
   const byJourney = {};
@@ -303,8 +327,10 @@ async function saveStudentProgressToSupabase(progress) {
   const row = {
     student_name: progress.studentName,
     student_classroom: progress.studentClassroom,
+    student_shift: progress.studentShift || "",
     student_name_norm: normalizeLookup(progress.studentName),
     student_classroom_norm: normalizeLookup(progress.studentClassroom),
+    student_shift_norm: normalizeStudentShift(progress.studentShift),
     journey_id: progress.journeyId,
     answers: progress.answers || {},
     total_questions: Number(progress.totalQuestions || 0),
@@ -314,7 +340,7 @@ async function saveStudentProgressToSupabase(progress) {
     status: progress.status || "not_started",
     updated_at: progress.updatedAt || new Date().toISOString(),
   };
-  const data = await supabaseRequest("/rest/v1/student_progress?on_conflict=student_name_norm,student_classroom_norm,journey_id", {
+  const data = await supabaseRequest("/rest/v1/student_progress?on_conflict=student_name_norm,student_classroom_norm,student_shift_norm,journey_id", {
     method: "POST",
     headers: { prefer: "resolution=merge-duplicates,return=representation" },
     body: JSON.stringify(row),
@@ -338,10 +364,11 @@ function getStudentJourneySearchIdentity(searchParams) {
   return {
     name: searchParams.get("name") || searchParams.get("studentName") || "",
     classroom: searchParams.get("classroom") || searchParams.get("studentClassroom") || "",
+    shift: searchParams.get("shift") || searchParams.get("studentShift") || "",
   };
 }
 
-function buildStudentJourneysPayload(name, classroom, journeyRecords, progressByJourneyId = {}) {
+function buildStudentJourneysPayload(name, classroom, shift, journeyRecords, progressByJourneyId = {}) {
   const journeys = journeyRecords.map((record) => {
     const student = record.metadata?.student || {};
     const totalQuestions = getJourneyQuestionTotal(record.journey);
@@ -365,37 +392,42 @@ function buildStudentJourneysPayload(name, classroom, journeyRecords, progressBy
       },
     };
   });
-  return { studentName: name, studentClassroom: classroom, journeys, storage: hasSupabase() ? "supabase" : "local" };
+  return { studentName: name, studentClassroom: classroom, studentShift: shift, journeys, storage: hasSupabase() ? "supabase" : "local" };
 }
 
 function getStudentJourneysPayloadLocal(searchParams) {
-  const { name, classroom } = getStudentJourneySearchIdentity(searchParams);
+  const { name, classroom, shift } = getStudentJourneySearchIdentity(searchParams);
   const normalizedName = normalizeLookup(name);
   const normalizedClassroom = normalizeLookup(classroom);
+  const normalizedShift = normalizeStudentShift(shift);
   const progress = loadStudentProgress();
   const records = sortJourneyRecords(loadJourneys().filter((record) => {
     const student = record.metadata?.student || {};
     return !isJourneyArchived(record)
       && normalizeLookup(student.studentName) === normalizedName
-      && normalizeLookup(student.studentClassroom) === normalizedClassroom;
+      && normalizeLookup(student.studentClassroom) === normalizedClassroom
+      && normalizeStudentShift(student.studentShift) === normalizedShift;
   })).slice(0, STUDENT_JOURNEY_LIMIT);
   const progressByJourneyId = {};
   records.forEach((record) => {
     const student = record.metadata?.student || {};
-    const key = getStudentProgressKey(student.studentName, student.studentClassroom, record.id);
-    progressByJourneyId[record.id] = progress[key] || {};
+    const key = getStudentProgressKey(student.studentName, student.studentClassroom, student.studentShift, record.id);
+    const legacyKey = getLegacyStudentProgressKey(student.studentName, student.studentClassroom, record.id);
+    progressByJourneyId[record.id] = progress[key] || progress[legacyKey] || {};
   });
-  return buildStudentJourneysPayload(name, classroom, records, progressByJourneyId);
+  return buildStudentJourneysPayload(name, classroom, shift, records, progressByJourneyId);
 }
 
-function getLocalStudentJourneyRecords(name, classroom) {
+function getLocalStudentJourneyRecords(name, classroom, shift = "") {
   const normalizedName = normalizeLookup(name);
   const normalizedClassroom = normalizeLookup(classroom);
+  const normalizedShift = normalizeStudentShift(shift);
   return loadJourneys().filter((record) => {
     const student = record.metadata?.student || {};
     return !isJourneyArchived(record)
       && normalizeLookup(student.studentName) === normalizedName
-      && normalizeLookup(student.studentClassroom) === normalizedClassroom;
+      && normalizeLookup(student.studentClassroom) === normalizedClassroom
+      && normalizeStudentShift(student.studentShift) === normalizedShift;
   });
 }
 
@@ -404,29 +436,30 @@ function sortJourneyRecords(records) {
 }
 
 async function getStudentJourneysPayload(searchParams) {
-  const { name, classroom } = getStudentJourneySearchIdentity(searchParams);
+  const { name, classroom, shift } = getStudentJourneySearchIdentity(searchParams);
   if (hasSupabase()) {
     try {
-      const supabaseRecords = await loadStudentJourneysFromSupabase(name, classroom);
-      const localRecords = getLocalStudentJourneyRecords(name, classroom);
+      const supabaseRecords = await loadStudentJourneysFromSupabase(name, classroom, shift);
+      const localRecords = getLocalStudentJourneyRecords(name, classroom, shift);
       const byId = new Map();
       [...localRecords, ...supabaseRecords].forEach((record) => {
         if (record?.id) byId.set(record.id, record);
       });
       const records = sortJourneyRecords([...byId.values()]).slice(0, STUDENT_JOURNEY_LIMIT);
-      const supabaseProgressByJourneyId = await loadProgressRowsFromSupabase(name, classroom, records.map((record) => record.id));
+      const supabaseProgressByJourneyId = await loadProgressRowsFromSupabase(name, classroom, shift, records.map((record) => record.id));
       const localProgress = loadStudentProgress();
       const progressByJourneyId = {};
       records.forEach((record) => {
         const student = record.metadata?.student || {};
-        const localKey = getStudentProgressKey(student.studentName, student.studentClassroom, record.id);
+        const localKey = getStudentProgressKey(student.studentName, student.studentClassroom, student.studentShift, record.id);
         const totalQuestions = getJourneyQuestionTotal(record.journey);
+        const legacyKey = getLegacyStudentProgressKey(student.studentName, student.studentClassroom, record.id);
         progressByJourneyId[record.id] = supabaseProgressByJourneyId[record.id]
           ? mapProgressRowToProgress(supabaseProgressByJourneyId[record.id], totalQuestions)
-          : (localProgress[localKey] || {});
+          : (localProgress[localKey] || localProgress[legacyKey] || {});
       });
       return {
-        ...buildStudentJourneysPayload(name, classroom, records, progressByJourneyId),
+        ...buildStudentJourneysPayload(name, classroom, shift, records, progressByJourneyId),
         storage: "supabase+local",
       };
     } catch (error) {
@@ -441,19 +474,21 @@ async function handleStudentProgress(req, res) {
     const payload = await readJsonBody(req);
     const studentName = payload.studentName || "";
     const studentClassroom = payload.studentClassroom || "";
+    const studentShift = payload.studentShift || "";
     const journeyId = payload.journeyId || "";
-    if (!studentName || !studentClassroom || !journeyId) {
-      return sendJson(res, 400, { error: "Nome, turma e trilha são obrigatórios." });
+    if (!studentName || !studentClassroom || !studentShift || !journeyId) {
+      return sendJson(res, 400, { error: "Nome, turma, turno e trilha são obrigatórios." });
     }
 
     const progress = loadStudentProgress();
-    const key = getStudentProgressKey(studentName, studentClassroom, journeyId);
+    const key = getStudentProgressKey(studentName, studentClassroom, studentShift, journeyId);
     const totalQuestions = Number(payload.totalQuestions || 0);
     const completedQuestions = Number(payload.completedQuestions || 0);
     const correctQuestions = Number(payload.correctQuestions || 0);
     progress[key] = {
       studentName,
       studentClassroom,
+      studentShift,
       journeyId,
       answers: payload.answers || {},
       totalQuestions,
@@ -525,6 +560,7 @@ function buildManagedJourneySummary(record) {
     title: record.journey?.title || "Trilha personalizada",
     studentName: student.studentName || "Aluno não informado",
     studentClassroom: student.studentClassroom || "Turma não informada",
+    studentShift: student.studentShift || "Não informado",
     subject: student.subject || "",
     pdfFile: record.pdfFile || "",
     createdAt: record.createdAt || null,

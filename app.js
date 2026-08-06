@@ -13,6 +13,7 @@ const studentNameInput = document.getElementById("student-name");
 const studentClassroomInput = document.getElementById("student-classroom");
 const studentClassYearInput = document.getElementById("student-class-year");
 const studentClassGroupInput = document.getElementById("student-class-group");
+const studentShiftInput = document.getElementById("student-shift");
 const loginHintEl = document.getElementById("login-hint");
 const devSkipLoginButton = document.getElementById("dev-skip-login");
 const startButton = document.getElementById("start-test");
@@ -90,6 +91,7 @@ const journeySubmitButton = document.getElementById("submit-journey-generator");
 const journeyGeneratedOutputEl = document.getElementById("journey-generated-output");
 const dashboardInterventionCopyEl = document.getElementById("dashboard-intervention-copy");
 const reportClassroomOptionsEl = document.getElementById("report-classroom-options");
+const reportShiftOptionsEl = document.getElementById("report-shift-options");
 const reportSubjectOptionsEl = document.getElementById("report-subject-options");
 const reportLevelOptionsEl = document.getElementById("report-level-options");
 const reportWeakSkillOptionsEl = document.getElementById("report-weak-skill-options");
@@ -109,6 +111,7 @@ const reportUseDashboardFiltersButton = document.getElementById("report-use-dash
 const dashboardStatusLabelEl = document.getElementById("dashboard-status-label");
 const dashboardSearchInput = document.getElementById("dashboard-search");
 const dashboardClassroomFilter = document.getElementById("dashboard-classroom-filter");
+const dashboardShiftFilter = document.getElementById("dashboard-shift-filter");
 const dashboardSubjectFilter = document.getElementById("dashboard-subject-filter");
 const dashboardQuestionSubjectFilter = document.getElementById("dashboard-question-subject");
 const dashboardQuestionListEl = document.getElementById("dashboard-question-list");
@@ -1366,6 +1369,7 @@ let state = {
   startTime: null,
   studentName: "",
   studentClassroom: "",
+  studentShift: "",
   resultSubmitted: false,
   lastResult: null,
   dashboardRows: [],
@@ -1424,7 +1428,8 @@ function updateLoginButtonState() {
     : "";
   studentClassroomInput.value = classroomValue;
   const hasClassroom = classroomValue.length > 0;
-  continueLoginButton.disabled = !(hasName && hasClassroom);
+  const hasShift = studentShiftInput?.value.trim().length > 0;
+  continueLoginButton.disabled = !(hasName && hasClassroom && hasShift);
   loginHintEl.style.display = continueLoginButton.disabled ? "" : "none";
 }
 
@@ -1485,6 +1490,7 @@ function resetState() {
     startTime: Date.now(),
     studentName: state.studentName,
     studentClassroom: state.studentClassroom,
+    studentShift: state.studentShift,
     resultSubmitted: false,
     lastResult: null,
     dashboardRows: state.dashboardRows,
@@ -1517,6 +1523,7 @@ function buildSheetPayload(resultData) {
     schemaVersion: "sheets-direct-v1",
     studentName: state.studentName,
     studentClassroom: state.studentClassroom,
+    studentShift: state.studentShift,
     subject: SUBJECT_DISPLAY_NAMES[state.subject] || state.subject,
     testVersion: getCurrentQuestionVersion(),
     level: `Nível ${resultData.levelNumber} · ${resultData.levelLabel}`,
@@ -2131,6 +2138,7 @@ renderWelcomeTyping(state.studentName, false);
 studentNameInput.addEventListener("input", updateLoginButtonState);
 studentClassYearInput.addEventListener("input", updateLoginButtonState);
 studentClassGroupInput.addEventListener("input", updateLoginButtonState);
+studentShiftInput?.addEventListener("change", updateLoginButtonState);
 
 openStudentAreaButton?.addEventListener("click", openStudentArea);
 
@@ -2158,6 +2166,7 @@ continueLoginButton.addEventListener("click", () => {
   if (continueLoginButton.disabled) return;
   state.studentName = studentNameInput.value.trim();
   state.studentClassroom = studentClassroomInput.value.trim();
+  state.studentShift = studentShiftInput?.value.trim() || "";
   renderWelcomeTyping(state.studentName, true);
   switchScreen("welcome");
 });
@@ -2166,9 +2175,11 @@ devSkipLoginButton.addEventListener("click", () => {
   studentNameInput.value = "Aluno Teste";
   studentClassYearInput.value = "3";
   studentClassGroupInput.value = "5";
+  if (studentShiftInput) studentShiftInput.value = "Matutino";
   updateLoginButtonState();
   state.studentName = studentNameInput.value.trim();
   state.studentClassroom = studentClassroomInput.value.trim();
+  state.studentShift = studentShiftInput?.value.trim() || "";
   renderWelcomeTyping(state.studentName, false);
   switchScreen("welcome");
 });
@@ -2231,6 +2242,7 @@ backToStartButton.addEventListener("click", () => {
   studentClassroomInput.value = "";
   studentClassYearInput.value = "";
   studentClassGroupInput.value = "";
+  if (studentShiftInput) studentShiftInput.value = "";
   updateLoginButtonState();
   renderWelcomeTyping("", false);
   switchScreen("login");
@@ -2287,6 +2299,7 @@ function normalizeDashboardRow(row) {
     submittedAt: String(getDashboardField(source, ["submittedAt", "Data", "data", "Timestamp"], "")).trim(),
     studentName: String(getDashboardField(source, ["studentName", "Nome do aluno", "Nome", "Aluno"], "Sem nome")).trim() || "Sem nome",
     studentClassroom: String(getDashboardField(source, ["studentClassroom", "Turma", "turma"], "Sem turma")).trim() || "Sem turma",
+    studentShift: String(getDashboardField(source, ["studentShift", "Turno", "turno"], "Não informado")).trim() || "Não informado",
     subject: String(getDashboardField(source, ["subject", "Matéria", "Materia", "Disciplina"], "Sem disciplina")).trim() || "Sem disciplina",
     level: levelText || "-",
     levelNumber,
@@ -2321,45 +2334,51 @@ function renderDashboardEmptyList(container, message) {
   container.replaceChildren(item);
 }
 
-function setSelectOptions(selectEl, values, currentValue = "Todas") {
+function setSelectOptions(selectEl, values, currentValue = "Todas", allLabel = "Todas") {
   if (!selectEl) return;
-  const uniqueValues = ["Todas", ...Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR"))];
+  const uniqueValues = [allLabel, ...Array.from(new Set(values.filter(Boolean))).sort((a, b) => a.localeCompare(b, "pt-BR"))];
   selectEl.replaceChildren(...uniqueValues.map((value) => {
     const option = document.createElement("option");
     option.value = value;
     option.textContent = value;
     return option;
   }));
-  selectEl.value = uniqueValues.includes(currentValue) ? currentValue : "Todas";
+  selectEl.value = uniqueValues.includes(currentValue) ? currentValue : allLabel;
 }
 
 function populateDashboardFilters() {
   const currentClassroom = dashboardClassroomFilter?.value || "Todas";
+  const currentShift = dashboardShiftFilter?.value || "Todos";
   const currentSubject = dashboardSubjectFilter?.value || "Todas";
   setSelectOptions(dashboardClassroomFilter, state.dashboardRows.map((row) => row.studentClassroom), currentClassroom);
+  setSelectOptions(dashboardShiftFilter, state.dashboardRows.map((row) => row.studentShift), currentShift, "Todos");
   setSelectOptions(dashboardSubjectFilter, state.dashboardRows.map((row) => row.subject), currentSubject);
 }
 
 function getFilteredDashboardRows() {
   const search = normalizeText(dashboardSearchInput?.value || "");
   const classroom = dashboardClassroomFilter?.value || "Todas";
+  const shift = dashboardShiftFilter?.value || "Todos";
   const subject = dashboardSubjectFilter?.value || "Todas";
 
   return state.dashboardRows.filter((row) => {
     const matchesSearch = !search || normalizeText(row.studentName).includes(search);
     const matchesClassroom = classroom === "Todas" || row.studentClassroom === classroom;
+    const matchesShift = shift === "Todos" || row.studentShift === shift;
     const matchesSubject = subject === "Todas" || row.subject === subject;
-    return matchesSearch && matchesClassroom && matchesSubject;
+    return matchesSearch && matchesClassroom && matchesShift && matchesSubject;
   });
 }
 
 function getDashboardFilterSummary() {
   const search = dashboardSearchInput?.value.trim();
   const classroom = dashboardClassroomFilter?.value || "Todas";
+  const shift = dashboardShiftFilter?.value || "Todos";
   const subject = dashboardSubjectFilter?.value || "Todas";
   return [
     search ? `Aluno contém: ${search}` : "Busca por aluno: todos",
     `Turma: ${classroom}`,
+    `Turno: ${shift}`,
     `Disciplina: ${subject}`,
   ];
 }
@@ -2371,7 +2390,7 @@ function setTeacherToolVisibility(toolEl, isVisible) {
 }
 
 function getReportStudentKey(row) {
-  return `${row.studentName}::${row.studentClassroom}`;
+  return `${row.studentName}::${row.studentClassroom}::${row.studentShift || "Não informado"}`;
 }
 
 function getCheckedReportValues(container) {
@@ -2415,7 +2434,7 @@ function renderReportStudentOptions(selectedKeys = getCheckedReportValues(report
   const students = new Map();
   state.dashboardRows.forEach((row) => {
     const key = getReportStudentKey(row);
-    const label = `${row.studentName} · ${row.studentClassroom}`;
+    const label = `${row.studentName} · ${row.studentClassroom} · ${row.studentShift || "Não informado"}`;
     if (!search || normalizeText(label).includes(search) || selected.has(key)) {
       students.set(key, label);
     }
@@ -2446,6 +2465,7 @@ function renderReportStudentOptions(selectedKeys = getCheckedReportValues(report
 
 function populateReportFilterOptions() {
   createReportChecklist(reportClassroomOptionsEl, state.dashboardRows.map((row) => row.studentClassroom), "report-classroom", getCheckedReportValues(reportClassroomOptionsEl));
+  createReportChecklist(reportShiftOptionsEl, state.dashboardRows.map((row) => row.studentShift), "report-shift", getCheckedReportValues(reportShiftOptionsEl));
   createReportChecklist(reportSubjectOptionsEl, state.dashboardRows.map((row) => row.subject), "report-subject", getCheckedReportValues(reportSubjectOptionsEl));
   createReportChecklist(reportLevelOptionsEl, ["Nível 1", "Nível 2", "Nível 3", "Nível 4"], "report-level", getCheckedReportValues(reportLevelOptionsEl));
   createReportChecklist(reportWeakSkillOptionsEl, state.dashboardRows.map((row) => row.weakestSkill), "report-weak-skill", getCheckedReportValues(reportWeakSkillOptionsEl));
@@ -2463,11 +2483,13 @@ function selectReportChecklistValue(container, value) {
 function useDashboardFiltersForReport() {
   populateReportFilterOptions();
   reportClassroomOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
+  reportShiftOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
   reportSubjectOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
   reportLevelOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
   reportWeakSkillOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
   reportWeakCognitiveOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
   selectReportChecklistValue(reportClassroomOptionsEl, dashboardClassroomFilter?.value);
+  selectReportChecklistValue(reportShiftOptionsEl, dashboardShiftFilter?.value);
   selectReportChecklistValue(reportSubjectOptionsEl, dashboardSubjectFilter?.value);
   if (reportStudentSearchInput) reportStudentSearchInput.value = dashboardSearchInput?.value || "";
   renderReportStudentOptions([]);
@@ -2486,6 +2508,7 @@ function parseReportTimestamp(value) {
 
 function getReportRows() {
   const classrooms = new Set(getCheckedReportValues(reportClassroomOptionsEl));
+  const shifts = new Set(getCheckedReportValues(reportShiftOptionsEl));
   const subjects = new Set(getCheckedReportValues(reportSubjectOptionsEl));
   const levels = new Set(getCheckedReportValues(reportLevelOptionsEl));
   const weakSkills = new Set(getCheckedReportValues(reportWeakSkillOptionsEl));
@@ -2499,12 +2522,13 @@ function getReportRows() {
   const filteredRows = state.dashboardRows.filter((row) => {
     const timestamp = parseReportTimestamp(row.submittedAt);
     const matchesClassroom = !classrooms.size || classrooms.has(row.studentClassroom);
+    const matchesShift = !shifts.size || shifts.has(row.studentShift);
     const matchesSubject = !subjects.size || subjects.has(row.subject);
     const matchesLevel = !levels.size || levels.has(getReportLevelLabel(row));
     const matchesWeakSkill = !weakSkills.size || weakSkills.has(row.weakestSkill);
     const matchesWeakCognitive = !weakCognitives.size || weakCognitives.has(row.weakestCognitive);
     const matchesSelectedStudent = !students.size || students.has(getReportStudentKey(row));
-    const matchesStudentSearch = students.size || !studentSearch || normalizeText(`${row.studentName} ${row.studentClassroom}`).includes(studentSearch);
+    const matchesStudentSearch = students.size || !studentSearch || normalizeText(`${row.studentName} ${row.studentClassroom} ${row.studentShift}`).includes(studentSearch);
     const matchesFrom = fromTime == null || (timestamp != null && timestamp >= fromTime);
     const matchesTo = toTime == null || (timestamp != null && timestamp <= toTime);
     const matchesAccuracy = accuracy === "low"
@@ -2514,7 +2538,7 @@ function getReportRows() {
         : accuracy === "high"
           ? row.accuracy > 85
           : true;
-    return matchesClassroom && matchesSubject && matchesLevel && matchesWeakSkill && matchesWeakCognitive && matchesSelectedStudent && matchesStudentSearch && matchesFrom && matchesTo && matchesAccuracy;
+    return matchesClassroom && matchesShift && matchesSubject && matchesLevel && matchesWeakSkill && matchesWeakCognitive && matchesSelectedStudent && matchesStudentSearch && matchesFrom && matchesTo && matchesAccuracy;
   });
 
   return keepLatestReportRows(filteredRows, reportRecordModeInput?.value || "all");
@@ -2562,6 +2586,7 @@ function getReportFilterSummary() {
   };
   return [
     `Turmas: ${describeReportSelection(getCheckedReportValues(reportClassroomOptionsEl), "todas")}`,
+    `Turnos: ${describeReportSelection(getCheckedReportValues(reportShiftOptionsEl), "todos")}`,
     `Disciplinas: ${describeReportSelection(getCheckedReportValues(reportSubjectOptionsEl), "todas")}`,
     `Níveis: ${describeReportSelection(getCheckedReportValues(reportLevelOptionsEl), "todos")}`,
     `A reforçar: ${describeReportSelection(getCheckedReportValues(reportWeakSkillOptionsEl), "todas as habilidades")}`,
@@ -2897,7 +2922,7 @@ function setJourneyManagerStatus(message, type = "") {
 }
 
 function getManagedJourneyDuplicateKey(record) {
-  return [record.studentName, record.studentClassroom, record.subject, record.title]
+  return [record.studentName, record.studentClassroom, record.studentShift, record.subject, record.title]
     .map((value) => normalizeText(String(value || "")))
     .join("|");
 }
@@ -2920,7 +2945,7 @@ function renderManagedJourneys() {
   const visible = managedJourneyRecords.filter((record) => {
     if (record.archivedAt && !showArchived) return false;
     if (!search) return true;
-    return normalizeText([record.title, record.studentName, record.studentClassroom, record.subject, record.pdfFile].join(" ")).includes(search);
+    return normalizeText([record.title, record.studentName, record.studentClassroom, record.studentShift, record.subject, record.pdfFile].join(" ")).includes(search);
   });
   if (!visible.length) {
     renderDashboardEmptyList(journeyManagerListEl, showArchived ? "Nenhuma trilha corresponde aos filtros." : "Nenhuma trilha ativa corresponde aos filtros.");
@@ -2934,7 +2959,7 @@ function renderManagedJourneys() {
     const identity = document.createElement("div");
     identity.append(
       createTextEl("strong", "journey-manager-student", record.studentName),
-      createTextEl("span", "journey-manager-meta", `${record.studentClassroom} · ${SUBJECT_DISPLAY_NAMES[record.subject] || record.subject || "Disciplina"}`)
+      createTextEl("span", "journey-manager-meta", `${record.studentClassroom} · ${record.studentShift || "Não informado"} · ${SUBJECT_DISPLAY_NAMES[record.subject] || record.subject || "Disciplina"}`)
     );
     const badges = document.createElement("div");
     badges.className = "journey-manager-badges";
@@ -3449,6 +3474,7 @@ function getStudentEngagement(rows = getFilteredDashboardRows()) {
         key,
         studentName: row.studentName,
         studentClassroom: row.studentClassroom,
+        studentShift: row.studentShift || "Não informado",
         xp: 0,
         accuracyTotal: 0,
         accuracyCount: 0,
@@ -3549,7 +3575,7 @@ function renderDashboardRanking(students = []) {
     info.className = "dashboard-ranking-info";
     info.append(
       createTextEl("strong", "", student.studentName),
-      createTextEl("span", "", student.studentClassroom + " · " + student.attempts + " registro(s) · " + student.averageAccuracy + "%")
+      createTextEl("span", "", student.studentClassroom + " · " + student.studentShift + " · " + student.attempts + " registro(s) · " + student.averageAccuracy + "%")
     );
 
     const score = document.createElement("div");
@@ -3723,7 +3749,7 @@ function renderDashboardTable(filteredRows = getFilteredDashboardRows()) {
     meta.textContent = `Taxa de acerto: ${row.accuracy}%`;
     studentTd.append(name, meta);
 
-    [studentTd, row.studentClassroom, row.subject, row.level, `${row.xp} XP`].forEach((value) => {
+    [studentTd, `${row.studentClassroom} · ${row.studentShift}`, row.subject, row.level, `${row.xp} XP`].forEach((value) => {
       if (value instanceof HTMLElement) {
         tr.appendChild(value);
         return;
@@ -3784,7 +3810,7 @@ function renderDashboardDetail(row) {
   }
 
   dashboardDetailNameEl.textContent = row.studentName;
-  dashboardDetailMetaEl.textContent = `${row.studentClassroom} • ${row.subject} • ${row.xp} XP`;
+  dashboardDetailMetaEl.textContent = `${row.studentClassroom} • ${row.studentShift} • ${row.subject} • ${row.xp} XP`;
   dashboardDetailLevelEl.textContent = row.level;
   dashboardDetailLevelSubEl.textContent = `Taxa de acerto: ${row.accuracy}%`;
   dashboardDetailStrongEl.textContent = row.strongestSkill;
@@ -3823,6 +3849,7 @@ function createJourneyPayload(row) {
   return {
     studentName: row.studentName,
     studentClassroom: row.studentClassroom,
+    studentShift: row.studentShift,
     subject: row.subject,
     level: row.level,
     accuracy: row.accuracy,
@@ -3869,7 +3896,7 @@ function openJourneyGeneratorModal() {
   }
 
   journeyStudentNameEl.textContent = row.studentName;
-  journeyStudentMetaEl.textContent = row.studentClassroom + " • " + row.subject + " • " + row.level;
+  journeyStudentMetaEl.textContent = row.studentClassroom + " • " + row.studentShift + " • " + row.subject + " • " + row.level;
   journeyFocusSkillEl.textContent = row.weakestSkill && row.weakestSkill !== "-" ? row.weakestSkill : "Habilidade a reforçar";
   journeyFocusCognitiveEl.textContent = row.weakestCognitive && row.weakestCognitive !== "-"
     ? "Maior dificuldade cognitiva: " + row.weakestCognitive
@@ -4551,6 +4578,7 @@ function getStudentAreaIdentity() {
   return {
     studentName: studentNameInput.value.trim(),
     studentClassroom: studentClassroomInput.value.trim(),
+    studentShift: studentShiftInput?.value.trim() || "",
   };
 }
 
@@ -4575,7 +4603,7 @@ function getStudentJourneyStatusLabel(progress = {}) {
 function renderStudentJourneyList(journeys = []) {
   if (!studentJourneyListEl) return;
   if (!journeys.length) {
-    studentJourneyListEl.innerHTML = '<div class="student-empty-card">Nenhuma trilha encontrada para este nome e turma.</div>';
+    studentJourneyListEl.innerHTML = '<div class="student-empty-card">Nenhuma trilha encontrada para este nome, turma e turno.</div>';
     return;
   }
   const cards = journeys.map((record, index) => {
@@ -4608,6 +4636,7 @@ function renderStudentJourneyDetail(record) {
     journeyId: record.id,
     studentName: identity.studentName,
     studentClassroom: identity.studentClassroom,
+    studentShift: identity.studentShift,
     totalQuestions: getJourneyTotalQuestions(record.journey),
     answers,
   };
@@ -4661,6 +4690,7 @@ async function recordStudentJourneyAnswer(lessonIndex, questionIndex, isCorrect,
   const payload = {
     studentName: context.studentName,
     studentClassroom: context.studentClassroom,
+    studentShift: context.studentShift,
     journeyId: context.journeyId,
     totalQuestions: context.totalQuestions,
     completedQuestions,
@@ -4690,13 +4720,14 @@ async function recordStudentJourneyAnswer(lessonIndex, questionIndex, isCorrect,
 
 async function openStudentArea() {
   const identity = getStudentAreaIdentity();
-  if (!identity.studentName || !identity.studentClassroom) {
-    loginHintEl.textContent = "Preencha nome e turma para abrir suas trilhas.";
+  if (!identity.studentName || !identity.studentClassroom || !identity.studentShift) {
+    loginHintEl.textContent = "Preencha nome, turma e turno para abrir suas trilhas.";
     loginHintEl.style.display = "";
     return;
   }
   state.studentName = identity.studentName;
   state.studentClassroom = identity.studentClassroom;
+  state.studentShift = identity.studentShift;
   switchScreen("studentArea");
   const studentAreaGrid = studentJourneyDetailEl?.closest(".student-area-grid");
   const studentJourneyView = studentJourneyDetailEl?.closest(".student-journey-view");
@@ -4704,7 +4735,7 @@ async function openStudentArea() {
   if (studentJourneyView) studentJourneyView.hidden = false;
   if (backFromStudentAreaButton) backFromStudentAreaButton.textContent = "Voltar";
   if (studentAreaSubtitleEl) {
-    studentAreaSubtitleEl.textContent = identity.studentName + " · " + identity.studentClassroom;
+    studentAreaSubtitleEl.textContent = identity.studentName + " · " + identity.studentClassroom + " · " + identity.studentShift;
   }
   if (studentJourneyListEl) studentJourneyListEl.innerHTML = '<div class="student-empty-card">Carregando trilhas...</div>';
   if (studentJourneyDetailEl) {
@@ -4730,7 +4761,7 @@ async function openStudentArea() {
     if (state.studentJourneys[0]) {
       renderStudentJourneyDetail(state.studentJourneys[0]);
     } else if (studentAreaEmptyEl) {
-      studentAreaEmptyEl.querySelector("p").textContent = "Nenhuma trilha foi enviada para este nome e turma ainda.";
+      studentAreaEmptyEl.querySelector("p").textContent = "Nenhuma trilha foi enviada para este nome, turma e turno ainda.";
     }
   } catch (error) {
     if (studentJourneyListEl) studentJourneyListEl.innerHTML = '<div class="student-empty-card">Erro ao carregar trilhas.</div>';
@@ -4934,7 +4965,7 @@ reportClearStudentsButton?.addEventListener("click", () => {
   reportStudentOptionsEl?.querySelectorAll("input[type='checkbox']").forEach((input) => { input.checked = false; });
   updateReportFilterPreview();
 });
-[reportClassroomOptionsEl, reportSubjectOptionsEl, reportLevelOptionsEl, reportWeakSkillOptionsEl, reportWeakCognitiveOptionsEl, reportStudentOptionsEl].forEach((container) => {
+[reportClassroomOptionsEl, reportShiftOptionsEl, reportSubjectOptionsEl, reportLevelOptionsEl, reportWeakSkillOptionsEl, reportWeakCognitiveOptionsEl, reportStudentOptionsEl].forEach((container) => {
   container?.addEventListener("change", updateReportFilterPreview);
 });
 [reportAccuracyFilter, reportDateFromInput, reportDateToInput, reportRecordModeInput].forEach((control) => {
@@ -4947,6 +4978,7 @@ dashboardQuestionSubjectFilter?.addEventListener("change", () => {
 
 dashboardSearchInput?.addEventListener("input", renderDashboardViews);
 dashboardClassroomFilter?.addEventListener("change", renderDashboardViews);
+dashboardShiftFilter?.addEventListener("change", renderDashboardViews);
 dashboardSubjectFilter?.addEventListener("change", renderDashboardViews);
 
 dashboardNavItems.forEach((item) => {
